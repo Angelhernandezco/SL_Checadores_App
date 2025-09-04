@@ -1,0 +1,7 @@
+{
+  "name": "SL_Checadores_App",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
