@@ -1,31 +1,59 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-
-export interface RegistroRequest {
-  id: string;
-  tipo: 'entrada' | 'salida';
-}
+import { finalize, Observable } from 'rxjs';
+import { environment } from 'src/environments/environment.prod';
 
 export interface Usuario {
   id: string;
   nombre: string;
-  foto: string;
+  foto: string | null;
+}
+
+export interface Permiso {
+  Employee_Id: number;
+  Name: string;
+  Photo: string | null;
+  Company: string;
+  Valid_Until: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class ChecadorService {
-  private apiUrl = 'https://tu-api.com/checador';
+  private apiUrl = `${environment.apiUrl}`;
 
   http = inject(HttpClient);
 
-  registrar(data: RegistroRequest): Observable<any> {
-    return this.http.post(`${this.apiUrl}/registrar`, data);
+  permisos = signal<Permiso[]>([]);
+  isLoading = signal<boolean>(false);
+
+  registrarEntrada(id: string): Observable<Usuario> {
+    this.isLoading.set(true);
+    return this.http.post<Usuario>(`${this.apiUrl}/exit_record/in/${id}`, {}).pipe(
+      finalize(() => this.isLoading.set(false)) 
+    );
   }
 
-  obtenerUsuario(id: string): Observable<Usuario> {
-    return this.http.get<Usuario>(`${this.apiUrl}/usuario/${id}`);
+  registrarSalida(id: string): Observable<Usuario> {
+    this.isLoading.set(true);
+    return this.http.post<Usuario>(`${this.apiUrl}/exit_record/out/${id}`, {}).pipe(
+      finalize(() => this.isLoading.set(false)) 
+    );
+  }
+
+  cargarPermisos(): void {
+    this.isLoading.set(true);
+    this.http.get<Permiso[]>(`${this.apiUrl}/permissions/`).subscribe({
+      next: (data) => {
+        this.permisos.set(data);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('❌ Error al cargar permisos', err);
+        this.permisos.set([]);
+        this.isLoading.set(false);
+      }
+    });
   }
 }

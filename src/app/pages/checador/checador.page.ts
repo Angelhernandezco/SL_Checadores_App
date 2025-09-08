@@ -2,14 +2,16 @@ import { Component, model, signal, ViewChild, ElementRef, ChangeDetectorRef, inj
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule, IonInput } from '@ionic/angular';
-import { Usuario } from './checador.service';
+import { ChecadorService, Usuario } from './checador.service';
+import { LoaderComponent } from "src/app/shared/loader/loader.component";
+import { AlertController } from '@ionic/angular';
 
 @Component({
   selector: 'app-checador',
   standalone: true,
   templateUrl: './checador.page.html',
   styleUrls: ['./checador.page.scss'],
-  imports: [CommonModule, FormsModule, IonicModule],
+  imports: [CommonModule, FormsModule, IonicModule, LoaderComponent],
 })
 export class ChecadorPage {
   // Referencia al input usando ViewChild con IonInput
@@ -19,6 +21,12 @@ export class ChecadorPage {
   modo = signal<'entrada' | 'salida'>('entrada');
   codigoLeido = model('');
   usuario = signal<Usuario | null>(null);
+  checadorService = inject(ChecadorService);
+  alertCtrl = inject(AlertController);
+
+  ngOnInit() {
+    this.checadorService.cargarPermisos();
+  }
 
   ngAfterViewInit() {
     setTimeout(() => {
@@ -37,38 +45,62 @@ export class ChecadorPage {
     const codigo = ev.target.value;
     this.codigoLeido.set(codigo);
 
-    if (codigo && codigo.length >= 5) {
-      // Simulación de búsqueda de usuario
+    const permiso = this.checadorService.permisos().find(
+      p => String(p.Employee_Id) === codigo
+    );
+
+    if (permiso) {
       this.usuario.set({
-        id: codigo,
-        nombre: 'Juan Pérez',
-        foto: 'assets/favicon.png',
+        id: String(permiso.Employee_Id),
+        nombre: permiso.Name,
+        foto: permiso.Photo,
       });
     } else {
       this.usuario.set(null);
     }
+
   }
 
   confirmar() {
     const user = this.usuario();
     if (!user) return;
 
-    console.log(`✅ Registrando ${this.modo()} de:`, user);
+    if (this.modo() === 'entrada') {
+      this.checadorService.registrarEntrada(user.id).subscribe({
+        next: (res) => {
+          this.playSuccess();
+          this.resetForm();
+        },
+        error: (err) => {
+          this.mostrarError(err?.error?.detail || err?.message || 'Error al registrar entrada');
+        }
+      });
+    } else {
+      this.checadorService.registrarSalida(user.id).subscribe({
+        next: (res) => {
+          this.playSuccess();
+          this.resetForm();
+        },
+        error: (err) => {
+          this.mostrarError(err?.error?.detail || err?.message || 'Error al registrar salida');
+        }
+      });
+    }
+  }
 
-    // TODO: llamar al servicio API
-    // this.checadorService.registrar(user.id, this.modo()).subscribe(...)
+  cancelar() {
+    this.resetForm();
+  }
 
-      const audio = new Audio('assets/sounds/success2.mp3');
-    audio.play();
+  private resetForm() {
     this.usuario.set(null);
     this.codigoLeido.set('');
     this.enfocarInput();
   }
 
-  cancelar() {
-    this.usuario.set(null);
-    this.codigoLeido.set('');
-    this.enfocarInput();
+  private playSuccess() {
+    const audio = new Audio('assets/sounds/success2.mp3');
+    audio.play();
   }
 
   // Método para enfocar el input
@@ -76,5 +108,23 @@ export class ChecadorPage {
     if (this.codigoInput) {
       this.codigoInput.setFocus();
     }
+  }
+
+  async mostrarError(mensaje: string) {
+    const alert = await this.alertCtrl.create({
+      header: 'Error al registrar al usuario',
+      message: mensaje,
+      buttons: [
+        {
+          text: 'Cerrar',
+          cssClass: 'btn-alert'
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  getImageSrc(base64String: string | null ): string {
+    return `data:image/jpeg;base64,${base64String}`;
   }
 }
