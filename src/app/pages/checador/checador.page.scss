@@ -30,7 +30,7 @@
     --footer-text-color: #ffffff;
 
     // Errores y exito
-    --error-color: #ff3333;
+    --error-color: #d02020;
     --error-background: #ffebeb; // 👈 Fondo del mensaje de error
     --success-color: #00a854;
     --success-background: #e6f7ee; // 👈 Fondo del mensaje de éxito
@@ -161,7 +161,7 @@ ion-content {
     margin-bottom: 1rem;
     font-size: 1.2rem;
     color: var(--text-color);
-    border: 2px solid var(--primary-color);
+    border: 1px solid var(--primary-color);
     background: #f9f9f9;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* sombra ligera */
     }
@@ -221,4 +221,35 @@ ion-content {
         background: var(--error-color-hover);
     }
 
+}
+
+.spinner-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 200px; /* Ajusta según necesites */
+}
+
+.spinner-verde {
+  --color: var(--primary-color);
+  width: 80px;
+  height: 80px;
+}
+
+.spinner-text {
+  margin-top: 10px;
+  font-weight: bold;
+  color: var(--primary-color);
+  font-size: 16px;
+  text-align: center;
+}
+
+.mensaje-error {
+  margin-top: 10px;
+  text-align: center;
+  font-weight: bold;
+  color: var(--error-color);
+  margin-top: 20px;
+  font-size: 16px;
 }

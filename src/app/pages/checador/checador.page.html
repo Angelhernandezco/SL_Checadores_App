@@ -64,20 +64,37 @@
   </div>
     <!-- Usuario encontrado -->
     @if (usuario(); as user) {
-    <div class="usuario-card">
-        <img [src]="getImageSrc(user.foto)" alt="Foto del empleado no registrada" />
-        <h2>{{ user.nombre }}</h2>
-        <p>ID: {{ user.id }}</p>
+      <div class="usuario-card">
+          @if (user.foto; as foto) {
+            <img [src]="getImageSrc(user.foto)" alt="Foto del empleado"/>
+          } @else {
+            <p class="mensaje-error" style="color: var(--error-color)">El empleado no tiene foto</p>
+          }
+          <h2>{{ user.nombre }}</h2>
+          <p>ID: {{ user.id }}</p>
 
-        <div class="button-group">
-          <button class="btn-confirmar" (click)="confirmar()">
-            Confirmar {{ modo() | titlecase }}
-          </button>
-          <button class="btn-cancelar" (click)="cancelar()">
-            Cancelar
-          </button>
-        </div>
-    </div>
+          <div class="button-group">
+            <button class="btn-confirmar" (click)="confirmar()">
+              Confirmar {{ modo() | titlecase }}
+            </button>
+            <button class="btn-cancelar" (click)="cancelar()">
+              Cancelar
+            </button>
+          </div>
+      </div>
+    } @else {
+      <div class="spinner-container" *ngIf="isLoadingPermiso()">
+        <ion-spinner name="crescent" class="spinner-verde"></ion-spinner>
+        <p class="spinner-text">Verificando permiso del usuario...</p>
+      </div>
+
+      <div class="mensaje-error" *ngIf="!isLoadingPermiso() && mensajeError()">
+        {{ mensajeError() }}
+      </div>
+
+      <div class="mensaje-error" *ngIf="!isLoadingPermiso() && !mensajeError()" style="color: var(--text-color);">
+        No se encontró el usuario
+      </div>
     }
 
 

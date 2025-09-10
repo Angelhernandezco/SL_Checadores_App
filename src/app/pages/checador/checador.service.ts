@@ -21,11 +21,10 @@ export interface Permiso {
   providedIn: 'root'
 })
 export class ChecadorService {
-  private apiUrl = `${environment.apiUrl}`;
+  private apiUrl = environment.apiUrl;
 
   http = inject(HttpClient);
 
-  permisos = signal<Permiso[]>([]);
   isLoading = signal<boolean>(false);
 
   registrarEntrada(id: string): Observable<Usuario> {
@@ -42,18 +41,7 @@ export class ChecadorService {
     );
   }
 
-  cargarPermisos(): void {
-    this.isLoading.set(true);
-    this.http.get<Permiso[]>(`${this.apiUrl}/permissions/`).subscribe({
-      next: (data) => {
-        this.permisos.set(data);
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        console.error('❌ Error al cargar permisos', err);
-        this.permisos.set([]);
-        this.isLoading.set(false);
-      }
-    });
+  verificarPermiso(id: string) {
+    return this.http.get<Permiso>(`${this.apiUrl}/permissions/${id}`);
   }
 }
