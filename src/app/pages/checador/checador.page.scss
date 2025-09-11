@@ -36,7 +36,6 @@
     --success-background: #e6f7ee; // 👈 Fondo del mensaje de éxito
 }
 
-
 ion-toolbar {
     --background: var(--header-background);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
@@ -44,7 +43,8 @@ ion-toolbar {
 
 ion-title {
     --color: var(--header-text-color);
-    font-size: 1.2rem;
+    padding-top: 10px;
+    font-size: 1.5rem;
     text-align: center;
 }
 
@@ -83,6 +83,7 @@ ion-content {
         background: transparent;
         color: var(--text-color);
         font-weight: 500;
+        font-size: 1.5rem;
         border-radius: 8px;
         margin: 0 3px;
         cursor: pointer;
@@ -120,6 +121,7 @@ ion-content {
     --padding-start: 16px;
     --padding-end: 50px;
     --highlight-height: 0;
+    font-size: 1rem;
     /* Espacio para el ícono */
 }
 
@@ -129,8 +131,8 @@ ion-content {
     right: 16px;
     top: 50%;
     transform: translateY(-50%);
-    width: 24px;
-    height: 24px;
+    width: 35px;
+    height: 35px;
     cursor: pointer;
     color: var(--text-color);
     transition: color 0.3s ease;
@@ -145,6 +147,7 @@ ion-content {
 
 /* 👤 Tarjeta usuario */
 .usuario-card {
+    font-size: 1.5rem;
     text-align: center;
     margin-top: 2rem;
     background: var(--background-secundary);
@@ -159,7 +162,7 @@ ion-content {
     object-fit: cover; /* recorta la imagen para que siempre se vea bien */
     border-radius: 8px; /* esquinas suaves, no circulares */
     margin-bottom: 1rem;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     color: var(--text-color);
     border: 1px solid var(--primary-color);
     background: #f9f9f9;
@@ -182,7 +185,7 @@ ion-content {
         padding: 0.9rem 2rem;
         border-radius: 12px;
         border: none;
-        font-size: 1rem;
+        font-size: 1.2rem;
         font-weight: 600;
         cursor: pointer;
         transition: background 0.2s;
@@ -205,24 +208,28 @@ ion-content {
         margin-top: 1rem;
     }
 
-    .btn-cancelar {
-        background: var(--error-color);
-        color: #fff;
-        padding: 0.9rem 2rem;
-        border-radius: 12px;
-        border: none;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.2s;
-    }
-
     .btn-cancelar:hover {
         background: var(--error-color-hover);
     }
 
 }
 
+.btn-cancelar {
+    background: var(--error-color);
+    color: #fff;
+    padding: 0.9rem 2rem;
+    border-radius: 12px;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.button-center {
+  display: flex;
+  justify-content: center;
+  padding-top: 1.5rem;
+}
 .spinner-container {
   display: flex;
   flex-direction: column;
@@ -241,7 +248,7 @@ ion-content {
   margin-top: 10px;
   font-weight: bold;
   color: var(--primary-color);
-  font-size: 16px;
+  font-size: 1.2rem;
   text-align: center;
 }
 
@@ -251,5 +258,5 @@ ion-content {
   font-weight: bold;
   color: var(--error-color);
   margin-top: 20px;
-  font-size: 16px;
+  font-size: 1.2rem;
 }

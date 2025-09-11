@@ -1,3 +1,6 @@
+<!-- Input invisible para capturar el scanner -->
+<input #hiddenInput style="position:absolute;opacity:0;pointer-events:none;"   inputmode="none"/>
+
 @if (checadorService.isLoading()) {
   <app-loader />
 }
@@ -9,93 +12,55 @@
 </ion-header>
 
 <ion-content class="ion-padding">
-
   <!-- Toggle Entrada/Salida -->
-    <div class="modo-toggle">
-        <div class="toggle-container">
-            <button
-            class="toggle-btn"
-            [class.active]="modo() === 'entrada'"
-            (click)="cambiarModo('entrada')"
-            >
-            Entrada
-            </button>
-            <button
-            class="toggle-btn"
-            [class.active]="modo() === 'salida'"
-            (click)="cambiarModo('salida')"
-            >
-            Salida
-            </button>
-        </div>
-    </div>
-
-
-  <!-- Input de código de barras con ícono -->
-  <div class="input-container">
-    <ion-input
-      #codigoInput
-      class="custom-input"
-      label="Escanear código de barras"
-      labelPlacement="floating"
-      [(ngModel)]="codigoLeido"
-      (ionInput)="onCodigoInput($event)"
-    ></ion-input>
-    <div class="scanner-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <!-- Marco exterior -->
-        <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" fill="none"/>
-        
-        <!-- Líneas del código de barras (más prominentes en el centro) -->
-        <line x1="7" y1="7" x2="7" y2="17" stroke="currentColor" stroke-width="1.8"/>
-        <line x1="9" y1="7" x2="9" y2="17" stroke="currentColor" stroke-width="1.2"/>
-        <line x1="11" y1="7" x2="11" y2="17" stroke="currentColor" stroke-width="2.2"/>
-        <line x1="13" y1="7" x2="13" y2="17" stroke="currentColor" stroke-width="0.8"/>
-        <line x1="15" y1="7" x2="15" y2="17" stroke="currentColor" stroke-width="1.6"/>
-        <line x1="17" y1="7" x2="17" y2="17" stroke="currentColor" stroke-width="2.0"/>
-        
-        <!-- Línea láser de escaneo (horizontal) -->
-        <line x1="6" y1="12" x2="18" y2="12" stroke="var(--primary-color)" stroke-width="1.2">
-            <animate attributeName="y1" values="7;17;7" dur="2s" repeatCount="indefinite" />
-            <animate attributeName="y2" values="7;17;7" dur="2s" repeatCount="indefinite" />
-        </line>
-        </svg>
+  <div class="modo-toggle">
+    <div class="toggle-container">
+      <button class="toggle-btn" [class.active]="modo() === 'salida'" (click)="cambiarModo('salida')">Salida</button>
+      <button class="toggle-btn" [class.active]="modo() === 'entrada'" (click)="cambiarModo('entrada')">Entrada</button>
     </div>
   </div>
-    <!-- Usuario encontrado -->
-    @if (usuario(); as user) {
-      <div class="usuario-card">
-          @if (user.foto; as foto) {
-            <img [src]="getImageSrc(user.foto)" alt="Foto del empleado"/>
-          } @else {
-            <p class="mensaje-error" style="color: var(--error-color)">El empleado no tiene foto</p>
-          }
-          <h2>{{ user.nombre }}</h2>
-          <p>ID: {{ user.id }}</p>
 
-          <div class="button-group">
-            <button class="btn-confirmar" (click)="confirmar()">
-              Confirmar {{ modo() | titlecase }}
-            </button>
-            <button class="btn-cancelar" (click)="cancelar()">
-              Cancelar
-            </button>
-          </div>
+  <!-- Input visible que refleja el código -->
+  <div class="input-container">
+    <ion-input
+      class="custom-input"
+      label="Código escaneado"
+      labelPlacement="stacked"
+      [value]="codigoLeido()"
+      readonly
+    ></ion-input>
+  </div>
+
+  <!-- Usuario encontrado -->
+  @if (usuario(); as user) {
+    <div class="usuario-card">
+      @if (user.foto; as foto) {
+        <img [src]="getImageSrc(user.foto)" alt="Foto del empleado"/>
+      } @else {
+        <p class="mensaje-error" style="color: var(--error-color)">El empleado no tiene foto</p>
+      }
+      <h2>{{ user.nombre }}</h2>
+      <p>ID: {{ user.id }}</p>
+      <div class="button-group">
+        <button class="btn-confirmar" (click)="confirmar()">Confirmar {{ modo() | titlecase }}</button>
+        <button class="btn-cancelar" (click)="cancelar()">Cancelar</button>
       </div>
-    } @else {
-      <div class="spinner-container" *ngIf="isLoadingPermiso()">
+    </div>
+  } @else {
+    <div *ngIf="isLoadingPermiso()">
+      <div class="spinner-container">
         <ion-spinner name="crescent" class="spinner-verde"></ion-spinner>
         <p class="spinner-text">Verificando permiso del usuario...</p>
       </div>
-
-      <div class="mensaje-error" *ngIf="!isLoadingPermiso() && mensajeError()">
-        {{ mensajeError() }}
+    </div>
+    <div *ngIf="mensajeError()" class="mensaje-error">
+      {{ mensajeError() }}
+      <div class="button-group button-center">
+        <button class="btn-cancelar" (click)="cancelar()">Cancelar</button>
       </div>
-
-      <div class="mensaje-error" *ngIf="!isLoadingPermiso() && !mensajeError()" style="color: var(--text-color);">
-        No se encontró el usuario
-      </div>
-    }
-
-
+    </div>
+    <div *ngIf="!isLoadingPermiso() && !mensajeError()" class="mensaje-error" style="color: var(--text-color);">
+      Escanea a un el código de barras de un empleado
+    </div>
+  }
 </ion-content>

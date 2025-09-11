@@ -1,48 +1,74 @@
-import { Component, model, signal, ViewChild, ElementRef, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, signal, inject, OnInit, AfterViewInit, ViewChild, ElementRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChecadorService, Usuario } from './checador.service';
 import { LoaderComponent } from "src/app/shared/loader/loader.component";
-import { AlertController } from '@ionic/angular';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonInput, IonSpinner } from "@ionic/angular/standalone";
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonInput, IonSpinner, AlertController  } from "@ionic/angular/standalone";
 
 @Component({
   selector: 'app-checador',
   standalone: true,
   templateUrl: './checador.page.html',
   styleUrls: ['./checador.page.scss'],
-  imports: [IonSpinner, IonContent, IonTitle, IonToolbar, IonHeader, CommonModule, FormsModule, LoaderComponent, IonInput],
+  imports: [
+    IonSpinner, IonContent, IonTitle, IonToolbar, IonHeader,
+    CommonModule, FormsModule, LoaderComponent, IonInput 
+  ],
 })
-export class ChecadorPage {
-  // Referencia al input usando ViewChild con IonInput
-  @ViewChild('codigoInput', { static: false, read: IonInput }) codigoInput!: IonInput;
-
-  // Signals para estado reactivo
+export class ChecadorPage implements OnInit, AfterViewInit {
   modo = signal<'entrada' | 'salida'>('salida');
-  codigoLeido = model('');
+  codigoLeido = signal<string>('');
   usuario = signal<Usuario | null>(null);
   checadorService = inject(ChecadorService);
   alertCtrl = inject(AlertController);
   isLoadingPermiso = signal(false);
   mensajeError = signal<string | null>(null);
+  private ngZone = inject(NgZone);
+
+  @ViewChild('hiddenInput', { static: true }) hiddenInput!: ElementRef<HTMLInputElement>;
+  private buffer: string = '';
+
+  ngOnInit() {
+    // Listener para teclas del scanner Zebra (modo teclado)
+    this.hiddenInput.nativeElement.addEventListener('input', (ev: any) => {
+      const valor: string = ev.target.value;
+      if (!valor) return;
+
+      // Agrega al buffer
+      this.buffer += valor;
+
+      // Cuando aparece "-", procesamos
+      if (this.buffer.includes('-')) {
+        const codigo = this.buffer.replace(/-/g, '').trim();
+        this.buffer = '';
+        this.codigoLeido.set(codigo);
+        this.procesarCodigo(codigo);
+        this.hiddenInput.nativeElement.value = '';
+      }
+    });
+  }
 
   ngAfterViewInit() {
-    setTimeout(() => {
-        this.enfocarInput();
-    }, 100); 
+    this.focusInputContinuo();
+  }
+
+  private focusInputContinuo() {
+    const focus = () => {
+      if (this.hiddenInput) {
+        this.hiddenInput.nativeElement.focus();
+      }
+      requestAnimationFrame(focus);
+    };
+    focus();
   }
 
   cambiarModo(m: 'entrada' | 'salida') {
     this.modo.set(m);
     this.usuario.set(null);
     this.codigoLeido.set('');
-    this.enfocarInput();
   }
 
-  onCodigoInput(ev: any) {
-    const codigo = ev.target.value;
-    this.codigoLeido.set(codigo);
-
+  private procesarCodigo(codigo: string) {
     if (!codigo) {
       this.usuario.set(null);
       this.mensajeError.set(null);
@@ -51,7 +77,6 @@ export class ChecadorPage {
 
     this.isLoadingPermiso.set(true);
     this.mensajeError.set(null);
-
 
     this.checadorService.verificarPermiso(codigo).subscribe({
       next: (permiso) => {
@@ -63,10 +88,10 @@ export class ChecadorPage {
         this.isLoadingPermiso.set(false);
       },
       error: (err) => {
-      const mensaje = err?.error?.detail || err?.message || 'Error al verificar permiso';
-      this.mensajeError.set(mensaje);
-      this.usuario.set(null);
-      this.isLoadingPermiso.set(false);
+        const mensaje = err?.error?.detail || err?.message || 'Error al verificar permiso';
+        this.mensajeError.set(mensaje);
+        this.usuario.set(null);
+        this.isLoadingPermiso.set(false);
       }
     });
   }
@@ -75,27 +100,20 @@ export class ChecadorPage {
     const user = this.usuario();
     if (!user) return;
 
-    if (this.modo() === 'entrada') {
-      this.checadorService.registrarEntrada(user.id).subscribe({
-        next: (res) => {
-          this.playSuccess();
-          this.resetForm();
-        },
-        error: (err) => {
-          this.mostrarError(err?.error?.detail || err?.message || 'Error al registrar entrada');
-        }
-      });
-    } else {
-      this.checadorService.registrarSalida(user.id).subscribe({
-        next: (res) => {
-          this.playSuccess();
-          this.resetForm();
-        },
-        error: (err) => {
-          this.mostrarError(err?.error?.detail || err?.message || 'Error al registrar salida');
-        }
-      });
-    }
+    const accion = this.modo() === 'entrada'
+      ? this.checadorService.registrarEntrada(user.id)
+      : this.checadorService.registrarSalida(user.id);
+
+    accion.subscribe({
+      next: () => {
+        this.playSuccess();
+        this.resetForm();
+      },
+      error: (err) => {
+        const mensaje = err?.error?.detail || err?.message || 'Error al registrar usuario';
+        this.mostrarError(mensaje);
+      }
+    });
   }
 
   cancelar() {
@@ -105,7 +123,8 @@ export class ChecadorPage {
   private resetForm() {
     this.usuario.set(null);
     this.codigoLeido.set('');
-    this.enfocarInput();
+    this.mensajeError.set('');
+    this.buffer = '';
   }
 
   private playSuccess() {
@@ -113,28 +132,16 @@ export class ChecadorPage {
     audio.play();
   }
 
-  // Método para enfocar el input
-  private enfocarInput() {
-    if (this.codigoInput) {
-      this.codigoInput.setFocus();
-    }
-  }
-
   async mostrarError(mensaje: string) {
     const alert = await this.alertCtrl.create({
       header: 'Error al registrar al usuario',
       message: mensaje,
-      buttons: [
-        {
-          text: 'Cerrar',
-          cssClass: 'btn-alert'
-        }
-      ]
+      buttons: [{ text: 'Cerrar', role: 'cancel' }]
     });
     await alert.present();
   }
 
-  getImageSrc(base64String: string | null ): string {
+  getImageSrc(base64String: string | null): string {
     return `data:image/jpeg;base64,${base64String}`;
   }
 }
